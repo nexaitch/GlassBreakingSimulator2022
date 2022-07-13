@@ -1,2 +1,1 @@
-import moderngl
-import open3d
+from voronoi import *
