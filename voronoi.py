@@ -1,3 +1,5 @@
+import logging
+
 import pyvista as pv
 from pyvista import _vtk
 import numpy as np
@@ -5,8 +7,11 @@ from collections import defaultdict
 
 
 def clip_multiple_planes(mesh, planes, tolerance=1e-6, inplace=False):
-    """Very hackish way to clip with multiple planes inplace"""
-    # specify planes as pairs of (normal, origin)
+    """
+    Very hackish way to clip with multiple planes inplace.
+    :param mesh The mesh to clip
+    :param planes a list of planes, specified as a pair of (normal, origin) vectors
+    """
     if mesh.n_open_edges > 0:
         raise ValueError("This surface appears to be non-manifold.")
 
@@ -32,6 +37,7 @@ def clip_multiple_planes(mesh, planes, tolerance=1e-6, inplace=False):
 
 
 def lines_to_adjacency_list(lines: np.ndarray):
+    """Converts a lines array to adjacency list."""
     adjacency_list = defaultdict(lambda: [])
     i = 0
     line_len = len(lines)
@@ -61,17 +67,22 @@ def split_voronoi(mesh: pv.PolyData, point_cloud: pv.PolyData):
             planes.append((norm, mid))
         # p.add_arrows(np.array([p[1] for p in planes]), np.array([p[0] for p in planes]))
         section = clip_multiple_planes(mesh, planes, inplace=False)
+        # section.clean(inplace=True)
+        if section.n_open_edges > 0:
+            logging.warning(f"{section.n_open_edges} open edges detected")
         if section.n_points > 0:
             sections.append(section)
+            # print(section.volume)
     return sections
-
-
 
 
 if __name__ == "__main__":
     import random
-    test_mesh = pv.Sphere(2)
-    points = np.random.random([20, 3])
+    # test_mesh = pv.Sphere(2)
+    test_mesh = pv.get_reader("data/GlassCup.stl").read()
+    logging.info(f"{test_mesh.n_open_edges} open edges found")
+    test_mesh.translate(-test_mesh.center_of_mass(), inplace=True)
+    points = (np.random.random([40, 3])-.5)*1.5 + 1
     test_point_cloud = pv.PolyData(points)
     ss = split_voronoi(test_mesh, test_point_cloud)
     p = pv.Plotter()
@@ -79,5 +90,6 @@ if __name__ == "__main__":
         if s.n_points > 0:
             c = (random.random(), random.random(), random.random())
             p.add_mesh(s, color=c, opacity=0.5)
+    p.add_points(test_point_cloud.points, opacity=1)
     p.show()
 
