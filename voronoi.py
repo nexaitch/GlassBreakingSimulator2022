@@ -7,6 +7,7 @@ from collections import defaultdict
 def clip_multiple_planes(mesh, planes, tolerance=1e-6, inplace=False):
     """Very hackish way to clip with multiple planes inplace"""
     # specify planes as pairs of (normal, origin)
+    
     if mesh.n_open_edges > 0:
         raise ValueError("This surface appears to be non-manifold.")
 
@@ -65,8 +66,25 @@ def split_voronoi(mesh: pv.PolyData, point_cloud: pv.PolyData):
             sections.append(section)
     return sections
 
+# Test Callback Functions
+def multimove():
+    for i in range(1,10,1):
+        move()
+        rotate()
+        p.update() #update the plot
 
+def move():
+    for s in ss:
+        if s.n_points > 0:
+            s = s.translate((np.random.random(),np.random.random(),np.random.random()) , inplace=True)
+    p.update()
 
+def rotate():
+    for s in ss:
+        if s.n_points > 0:
+            s = s.rotate_vector((np.random.random(), np.random.random(), np.random.random()), np.random.randint(low=0, high=90, size=None, dtype=int), inplace=True)
+            # inplace = True to update mesh
+    p.update()
 
 if __name__ == "__main__":
     import random
@@ -90,8 +108,10 @@ if __name__ == "__main__":
 
     points = np.random.random([20, 3])
     test_point_cloud = pv.PolyData(points)
+    
     ss = split_voronoi(test_mesh, test_point_cloud)
     p = pv.Plotter()
+    
     for s in ss:
         if s.n_points > 0:
             c = (random.random(), random.random(), random.random())
@@ -113,6 +133,33 @@ if __name__ == "__main__":
 
     # use depth_peeling for better translucent material - https://docs.pyvista.org/api/plotting/_autosummary/pyvista.Plotter.enable_depth_peeling.html ??? - test
 
+    # key press events
+    p.add_key_event("a", move)
+
+    p.add_key_event("b", multimove)
+
+    p.add_key_event("c", rotate)
+
     # p.enable_eye_dome_lighting()
     p.show()
 
+    """
+    # Splitting volumes TEST - extract each split volume
+    # Source: https://docs.pyvista.org/examples/01-filter/compute-volume.html#split-vol-ref
+    for i, body in enumerate(ss):
+        pl = pv.Plotter()
+        pl.add_mesh(body, style='surface', lighting=True, opacity=0.1, smooth_shading = True, ambient=0, diffuse=1, specular=5, specular_power=128, use_transparency=True, metallic=1, roughness=0.0)
+        print(f"Body {i} volume: {body.volume:.3f}")
+        pl.show()
+        pl.clear()
+    """
+
+    """
+    # Translate each separate volume
+    p2 = pv.Plotter()
+    for s in ss:
+        if s.n_points > 0:
+            trans = s.translate((np.random.random(),np.random.random(),np.random.random()) , inplace=True)
+            p2.add_mesh(trans, style='surface', lighting=True, opacity=0.1, smooth_shading = True, ambient=0, diffuse=1, specular=5, specular_power=128, use_transparency=True, metallic=1, roughness=0.0)
+    p2.show()
+    """

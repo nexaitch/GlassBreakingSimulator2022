@@ -22,7 +22,7 @@ pl.show()
 """
 # Try to add background image - source: https://docs.pyvista.org/api/plotting/_autosummary/pyvista.Plotter.add_background_image.html
 # BACKGROUND IMAGE
-filename = "data/Glass.obj"
+filename = "data/Altar.stl"
 filename.split("/")[-1]  # omit the path
 reader = pyvista.get_reader(filename)
 mesh = reader.read()
