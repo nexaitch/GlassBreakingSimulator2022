@@ -70,6 +70,7 @@ def split_voronoi(mesh: pv.PolyData, point_cloud: pv.PolyData):
 
 if __name__ == "__main__":
     import random
+    """
     test_mesh = pv.Sphere(2)
     points = np.random.random([20, 3])
     test_point_cloud = pv.PolyData(points)
@@ -79,5 +80,39 @@ if __name__ == "__main__":
         if s.n_points > 0:
             c = (random.random(), random.random(), random.random())
             p.add_mesh(s, color=c, opacity=0.5)
+    p.show()
+    """
+    # With Glass Model
+    filename = "data/GlassCup.stl"
+    filename.split("/")[-1]  # omit the path
+    reader = pv.get_reader(filename)
+    test_mesh = reader.read()
+
+    points = np.random.random([20, 3])
+    test_point_cloud = pv.PolyData(points)
+    ss = split_voronoi(test_mesh, test_point_cloud)
+    p = pv.Plotter()
+    for s in ss:
+        if s.n_points > 0:
+            c = (random.random(), random.random(), random.random())
+            p.add_mesh(s, style='surface', lighting=True, opacity=0.1, smooth_shading = True, ambient=0, diffuse=1, specular=5, specular_power=128, use_transparency=True, metallic=1, roughness=0.0)
+    # More functions
+
+    p.add_background_image("data/snow.jpg")
+
+
+    # ADD Camera Orientation Widget - https://docs.pyvista.org/api/plotting/_autosummary/pyvista.Plotter.add_camera_orientation_widget.html
+    p.add_camera_orientation_widget()
+
+    # ADD TEXT
+    actor = p.add_text('Glass Cup', position='lower_left', color='blue',
+                        shadow=True, font_size=26)
+
+    # enable anti aliasing
+    p.enable_anti_aliasing()
+
+    # use depth_peeling for better translucent material - https://docs.pyvista.org/api/plotting/_autosummary/pyvista.Plotter.enable_depth_peeling.html ??? - test
+
+    # p.enable_eye_dome_lighting()
     p.show()
 
