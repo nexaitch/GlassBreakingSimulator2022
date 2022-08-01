@@ -86,6 +86,30 @@ def rotate():
             # inplace = True to update mesh
     p.update()
 
+
+def generate_points(size: int, origin: np.ndarray = None, spread: float = 1):
+    # https://mathworld.wolfram.com/SpherePointPicking.html
+
+    if origin is None:
+        origin = np.zeros(3)
+
+    assert origin.shape[0] == 3 and len(origin.shape) == 1
+
+    origins = np.resize(origin, (size, 3))
+
+    print(origins)
+
+    thetas = 2 * np.pi * np.random.rand(size)
+    phis = np.arccos(2*np.random.rand(size) - 1)
+
+    distances = np.random.chisquare(3, size) * spread
+
+    xs = distances * np.cos(thetas) * np.sin(phis)
+    ys = distances * np.sin(thetas) * np.sin(phis)
+    zs = distances * np.cos(phis)
+    return np.vstack((xs, ys, zs)).transpose() + origins
+
+
 if __name__ == "__main__":
     import random
     """
@@ -111,6 +135,7 @@ if __name__ == "__main__":
     
     ss = split_voronoi(test_mesh, test_point_cloud)
     p = pv.Plotter()
+    p.add_points(test_point_cloud)
     
     for s in ss:
         if s.n_points > 0:
