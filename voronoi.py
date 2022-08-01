@@ -87,7 +87,7 @@ def rotate():
     p.update()
 
 
-def generate_points(size: int, origin: np.ndarray = None, spread: float = 1):
+def generate_points(size: int, origin: np.ndarray = None, spread: float = 1, df: int = 3):
     # https://mathworld.wolfram.com/SpherePointPicking.html
 
     if origin is None:
@@ -97,12 +97,11 @@ def generate_points(size: int, origin: np.ndarray = None, spread: float = 1):
 
     origins = np.resize(origin, (size, 3))
 
-    print(origins)
-
     thetas = 2 * np.pi * np.random.rand(size)
     phis = np.arccos(2*np.random.rand(size) - 1)
 
-    distances = np.random.chisquare(3, size) * spread
+    # we divide by df, so we can change it without changing the mean distance
+    distances = np.random.chisquare(df, size) * spread / df
 
     xs = distances * np.cos(thetas) * np.sin(phis)
     ys = distances * np.sin(thetas) * np.sin(phis)
@@ -130,7 +129,7 @@ if __name__ == "__main__":
     reader = pv.get_reader(filename)
     test_mesh = reader.read()
 
-    points = np.random.random([20, 3])
+    points = generate_points(50, df=20b)
     test_point_cloud = pv.PolyData(points)
     
     ss = split_voronoi(test_mesh, test_point_cloud)
@@ -143,11 +142,11 @@ if __name__ == "__main__":
             p.add_mesh(s, style='surface', lighting=True, opacity=0.1, smooth_shading = True, ambient=0, diffuse=1, specular=5, specular_power=128, use_transparency=True, metallic=1, roughness=0.0)
     # More functions
 
-    p.add_background_image("data/snow.jpg")
+    # p.add_background_image("data/snow.jpg")
 
 
     # ADD Camera Orientation Widget - https://docs.pyvista.org/api/plotting/_autosummary/pyvista.Plotter.add_camera_orientation_widget.html
-    p.add_camera_orientation_widget()
+    # p.add_camera_orientation_widget()
 
     # ADD TEXT
     actor = p.add_text('Glass Cup', position='lower_left', color='blue',
