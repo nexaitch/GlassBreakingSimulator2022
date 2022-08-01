@@ -3,7 +3,6 @@ from pyvista import _vtk
 import numpy as np
 from collections import defaultdict
 
-
 def clip_multiple_planes(mesh, planes, tolerance=1e-6, inplace=False):
     """Very hackish way to clip with multiple planes inplace"""
     # specify planes as pairs of (normal, origin)
@@ -70,7 +69,7 @@ def split_voronoi(mesh: pv.PolyData, point_cloud: pv.PolyData):
 def multimove():
     for i in range(1,10,1):
         move()
-        rotate()
+        #rotate()
         p.update() #update the plot
 
 def move():
