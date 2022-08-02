@@ -109,9 +109,23 @@ def rotate():
             # inplace = True to update mesh
     p.update()
 
-# ADD function to Regenerate/respawn Glass model after it has been destroyed
+# ADD function to Regenerate/respawn Glass model after it has been destroyed - Buggy, when regenerating the texture is completely white
+def regen_glass():
+    p.clear() # clear plot and remove all actors and properties    
+    ss = split_voronoi(test_mesh, test_point_cloud)
+    p.add_points(test_point_cloud)
 
-# Add function to play background music BGM
+    # PolyData, how to get center of the bounding box!
+    print("Center of the very first fragment:", ss[0].center)
+    
+    for s in ss:
+        if s.n_points > 0:
+            c = (random.random(), random.random(), random.random())
+            p.add_mesh(s, style='surface', lighting=True, opacity=0.1, smooth_shading = True, ambient=0, diffuse=1, specular=5, specular_power=128, use_transparency=True, metallic=1, roughness=0.0)
+
+    p.update()
+
+# Added function to play background music BGM
 
 
 def generate_points(size: int, origin: np.ndarray = None, spread: float = 1, df: int = 3):
@@ -202,7 +216,7 @@ if __name__ == "__main__":
 
     p.add_key_event("c", rotate)
 
-    p.add_key_event("d", more_cracks)
+    p.add_key_event("d", regen_glass)
 
 
     # p.enable_eye_dome_lighting()
