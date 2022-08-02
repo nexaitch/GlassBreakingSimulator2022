@@ -3,6 +3,7 @@ from pyvista import _vtk
 import numpy as np
 from collections import defaultdict
 
+import time
 
 # Playing Sounds !!! make sure to pip install pygame and copy the libmpg123.dll from pygame folder to Windows/System32
 ##################
@@ -85,6 +86,7 @@ def split_voronoi(mesh: pv.PolyData, point_cloud: pv.PolyData):
 def multimove():
     #Play the glass breaking sound effect
     mixer.music.play()
+    time.sleep(0.4) #delay 0.4 seconds to make sound match the (current) breaking animation
     # https://www.pygame.org/docs/ref/music.html
     for i in range(1,100,1): # How long the glass breaking animation lasts
         move()
