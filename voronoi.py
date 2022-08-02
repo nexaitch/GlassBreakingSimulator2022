@@ -73,9 +73,13 @@ def multimove():
         p.update() #update the plot
 
 def move():
+    special_point = np.array((0,0,0))
     for s in ss:
         if s.n_points > 0:
+            s_vector = np.array(s.center) # center of the bounding box
+            d_vector = s_vector - special_point
             s = s.translate((np.random.random(),np.random.random(),np.random.random()) , inplace=True)
+            s = s.translate((d_vector[0],d_vector[1],d_vector[2]) , inplace=True)
     p.update()
 
 def rotate():
@@ -128,12 +132,15 @@ if __name__ == "__main__":
     reader = pv.get_reader(filename)
     test_mesh = reader.read()
 
-    points = generate_points(50, df=20b)
+    points = generate_points(50, df=20)
     test_point_cloud = pv.PolyData(points)
     
     ss = split_voronoi(test_mesh, test_point_cloud)
     p = pv.Plotter()
     p.add_points(test_point_cloud)
+
+    # PolyData, center of the bounding box!
+    print(ss[0].center)
     
     for s in ss:
         if s.n_points > 0:
