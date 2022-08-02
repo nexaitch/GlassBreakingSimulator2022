@@ -14,11 +14,10 @@ from pygame import mixer
 mixer.init()
 
 #Load audio file
-mixer.music.load('break.mp3') # WORKS
-
+mixer.music.load('danceofpales.mp3') # BGM
 #Set preferred volume
 mixer.music.set_volume(0.2)
-
+mixer.music.play(loops=-1) #set loops to -1 to loop indefinitely, start at 0.0
 
 def clip_multiple_planes(mesh, planes, tolerance=1e-6, inplace=False):
     """Very hackish way to clip with multiple planes inplace"""
@@ -85,7 +84,7 @@ def split_voronoi(mesh: pv.PolyData, point_cloud: pv.PolyData):
 # Test Callback Functions
 def multimove():
     #Play the glass breaking sound effect
-    mixer.music.play()
+    mixer.Channel(0).play(mixer.Sound("break.mp3"), maxtime=1200) # use channels to play SFX on top of background music, use maxtime to stop after certain miliseconds
     time.sleep(0.4) #delay 0.4 seconds to make sound match the (current) breaking animation
     # https://www.pygame.org/docs/ref/music.html
     for i in range(1,100,1): # How long the glass breaking animation lasts
@@ -109,6 +108,10 @@ def rotate():
             s = s.rotate_vector((np.random.random(), np.random.random(), np.random.random()), np.random.randint(low=0, high=90, size=None, dtype=int), inplace=True)
             # inplace = True to update mesh
     p.update()
+
+# ADD function to Regenerate/respawn Glass model after it has been destroyed
+
+# Add function to play background music BGM
 
 
 def generate_points(size: int, origin: np.ndarray = None, spread: float = 1, df: int = 3):
