@@ -3,6 +3,22 @@ from pyvista import _vtk
 import numpy as np
 from collections import defaultdict
 
+
+# Playing Sounds !!! make sure to pip install pygame and copy the libmpg123.dll from pygame folder to Windows/System32
+##################
+import pygame
+from pygame import mixer
+
+#Instantiate mixer
+mixer.init()
+
+#Load audio file
+mixer.music.load('break.mp3') # WORKS
+
+#Set preferred volume
+mixer.music.set_volume(0.2)
+
+
 def clip_multiple_planes(mesh, planes, tolerance=1e-6, inplace=False):
     """Very hackish way to clip with multiple planes inplace"""
     # specify planes as pairs of (normal, origin)
@@ -67,6 +83,9 @@ def split_voronoi(mesh: pv.PolyData, point_cloud: pv.PolyData):
 
 # Test Callback Functions
 def multimove():
+    #Play the glass breaking sound effect
+    mixer.music.play()
+    # https://www.pygame.org/docs/ref/music.html
     for i in range(1,100,1): # How long the glass breaking animation lasts
         move()
         #rotate()
@@ -111,6 +130,14 @@ def generate_points(size: int, origin: np.ndarray = None, spread: float = 1, df:
     zs = distances * np.cos(phis)
     return np.vstack((xs, ys, zs)).transpose() + origins
 
+# Splitting/Cracking Callback function, crack the glass or object more and more upon button click - Need to Edit n fix
+def more_cracks():
+    for s in ss:
+        if s.n_points > 0:
+            p = p
+            # inplace = True to update mesh
+    p.update()
+
 
 if __name__ == "__main__":
     import random
@@ -139,8 +166,8 @@ if __name__ == "__main__":
     p = pv.Plotter()
     p.add_points(test_point_cloud)
 
-    # PolyData, center of the bounding box!
-    print(ss[0].center)
+    # PolyData, how to get center of the bounding box!
+    print("Center of the very first fragment:", ss[0].center)
     
     for s in ss:
         if s.n_points > 0:
@@ -163,12 +190,15 @@ if __name__ == "__main__":
 
     # use depth_peeling for better translucent material - https://docs.pyvista.org/api/plotting/_autosummary/pyvista.Plotter.enable_depth_peeling.html ??? - test
 
-    # key press events
+    # key press events - CASE SENSTITIVE
     p.add_key_event("a", move)
 
     p.add_key_event("b", multimove)
 
     p.add_key_event("c", rotate)
+
+    p.add_key_event("d", more_cracks)
+
 
     # p.enable_eye_dome_lighting()
     p.show()
