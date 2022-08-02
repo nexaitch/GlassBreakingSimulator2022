@@ -22,7 +22,7 @@ pl.show()
 """
 # Try to add background image - source: https://docs.pyvista.org/api/plotting/_autosummary/pyvista.Plotter.add_background_image.html
 # BACKGROUND IMAGE
-filename = "data/Altar.stl"
+filename = "data/GlassCup.stl"
 filename.split("/")[-1]  # omit the path
 reader = pyvista.get_reader(filename)
 mesh = reader.read()
@@ -32,8 +32,16 @@ pl.enable_anti_aliasing()
 # use depth_peeling for better translucent material - https://docs.pyvista.org/api/plotting/_autosummary/pyvista.Plotter.enable_depth_peeling.html
 #pl.enable_depth_peeling(number_of_peels=4, occlusion_ratio=0)
 
-actor = pl.add_mesh(mesh, style='surface', lighting=True, opacity=0.001, smooth_shading = True, ambient=0, diffuse=1, specular=5, use_transparency=True, roughness=0.0)
-pl.add_background_image("data/snow.jpg")
+
+# TESTING PBR
+from pyvista import examples
+# Download skybox
+cubemap = examples.download_sky_box_cube_map()
+
+pl.add_actor(cubemap.to_skybox())
+pl.set_environment_texture(cubemap)  # For reflecting the environment off the mesh
+pl.add_mesh(mesh, color='white', pbr=True, metallic=1, roughness=0.1, diffuse=1, opacity=0.1, smooth_shading = True, use_transparency=True, specular=5)
+#pl.add_background_image("data/snow.jpg")
 
 
 # ADD Camera Orientation Widget - https://docs.pyvista.org/api/plotting/_autosummary/pyvista.Plotter.add_camera_orientation_widget.html

@@ -109,7 +109,7 @@ def rotate():
             # inplace = True to update mesh
     p.update()
 
-# ADD function to Regenerate/respawn Glass model after it has been destroyed - Buggy, when regenerating the texture is completely white
+# ADD function to Regenerate/respawn Glass model after it has been destroyed - Buggy, when regenerating the texture is completely white also does not break anymore
 def regen_glass():
     p.clear() # clear plot and remove all actors and properties    
     ss = split_voronoi(test_mesh, test_point_cloud)
@@ -126,6 +126,19 @@ def regen_glass():
     p.update()
 
 # Added function to play background music BGM
+
+# IDEAS: Add function to SWITCH what kind of object/3D MODEL to BREAK !!!
+# The idea is like a left/right button to scroll through list of objects
+# May need a list of all objects to load and object models as well
+def switch_object_left():
+
+    return True
+
+def switch_object_right():
+
+    return True
+
+# Add function to load
 
 
 def generate_points(size: int, origin: np.ndarray = None, spread: float = 1, df: int = 3):
@@ -187,14 +200,37 @@ if __name__ == "__main__":
 
     # PolyData, how to get center of the bounding box!
     print("Center of the very first fragment:", ss[0].center)
+
+    # TESTING PBR (Physically Based Rendering)
+    from pyvista import examples
+    # Download skybox
+    #cubemap = examples.download_sky_box_cube_map()
+
+    # Creating a cubemap - https://docs.pyvista.org/api/utilities/_autosummary/pyvista.cubemap_from_filenames.html?highlight=cube+map#pyvista.cubemap_from_filenames - TEST
+    # specify 6 images as the cube faces
+    image_paths = [
+    'ballroom.jpg',
+    'ballroom.jpg',
+    'ballroom.jpg',
+    'ballroom.jpg',
+    'ballroom.jpg',
+    'ballroom.jpg',
+    ]
+    cubemap = pv.cubemap_from_filenames(image_paths=image_paths)  
+
+    # https://docs.pyvista.org/api/utilities/_autosummary/pyvista.cubemap.html
+    p.add_actor(cubemap.to_skybox())
+    # skybox = pv.cubemap('cubemap_test', 'skybox', '.jpg')  
+    p.set_environment_texture(cubemap)  # For reflecting the environment off the mesh
     
     for s in ss:
         if s.n_points > 0:
             c = (random.random(), random.random(), random.random())
-            p.add_mesh(s, style='surface', lighting=True, opacity=0.1, smooth_shading = True, ambient=0, diffuse=1, specular=5, specular_power=128, use_transparency=True, metallic=1, roughness=0.0)
+            # Try using PBR mode for more realism, PBR only works with PolyData
+            p.add_mesh(s, color='white', pbr=True, metallic=1, roughness=0.1, diffuse=1, opacity=0.1, smooth_shading = True, use_transparency=True, specular=5)
     # More functions
 
-    # p.add_background_image("data/snow.jpg")
+    # p.add_background_image("ballroom.jpg")
 
 
     # ADD Camera Orientation Widget - https://docs.pyvista.org/api/plotting/_autosummary/pyvista.Plotter.add_camera_orientation_widget.html
