@@ -67,7 +67,7 @@ def split_voronoi(mesh: pv.PolyData, point_cloud: pv.PolyData):
 
 # Test Callback Functions
 def multimove():
-    for i in range(1,10,1):
+    for i in range(1,100,1): # How long the glass breaking animation lasts
         move()
         #rotate()
         p.update() #update the plot
@@ -78,8 +78,8 @@ def move():
         if s.n_points > 0:
             s_vector = np.array(s.center) # center of the bounding box
             d_vector = s_vector - special_point
-            s = s.translate((np.random.random(),np.random.random(),np.random.random()) , inplace=True)
-            s = s.translate((d_vector[0],d_vector[1],d_vector[2]) , inplace=True)
+            # s = s.translate((np.random.random(),np.random.random(),np.random.random()) , inplace=True)
+            s = s.translate((d_vector[0]/10,d_vector[1]/10,d_vector[2]/10) , inplace=True) #vector components to move the glass, Divide by a larger number to make it slower, multiply to make faster
     p.update()
 
 def rotate():
