@@ -204,23 +204,28 @@ if __name__ == "__main__":
     # TESTING PBR (Physically Based Rendering)
     from pyvista import examples
     # Download skybox
-    #cubemap = examples.download_sky_box_cube_map()
+    # cubemap = examples.download_sky_box_cube_map()
+    # Space cubemap
+    # cubemap = examples.download_cubemap_space_4k()
+
+    # May be useful to convert panorama image to a cubemap - https://jaxry.github.io/panorama-to-cubemap/
 
     # Creating a cubemap - https://docs.pyvista.org/api/utilities/_autosummary/pyvista.cubemap_from_filenames.html?highlight=cube+map#pyvista.cubemap_from_filenames - TEST
     # specify 6 images as the cube faces
-    image_paths = [
+    """image_paths = [
     'ballroom.jpg',
     'ballroom.jpg',
     'ballroom.jpg',
     'ballroom.jpg',
     'ballroom.jpg',
     'ballroom.jpg',
-    ]
-    cubemap = pv.cubemap_from_filenames(image_paths=image_paths)  
+    ]"""
+    # cubemap = pv.cubemap_from_filenames(image_paths=image_paths)  
 
     # https://docs.pyvista.org/api/utilities/_autosummary/pyvista.cubemap.html
-    p.add_actor(cubemap.to_skybox())
-    # skybox = pv.cubemap('cubemap_test', 'skybox', '.jpg')  
+    # p.add_actor(cubemap.to_skybox())
+    cubemap = pv.cubemap('cubemap_test', 'spacehigh', '.jpg') #create a cubemap from the 6 images, arguments are the Directory folder, followed by the prefix for the images, followed by the image extension
+    p.add_actor(cubemap.to_skybox()) # convert cubemap to skybox  
     p.set_environment_texture(cubemap)  # For reflecting the environment off the mesh
     
     for s in ss:
