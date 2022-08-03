@@ -72,15 +72,15 @@ def split_voronoi(mesh: pv.PolyData, point_cloud: pv.PolyData):
 
 
 def make_physics_function(
-        origin=np.array((0, 0, 0)),
-        gravity=np.array((0, 0, 0)),
-        forward_impact=np.array((0, 0, 0)),
-        explodiness=2,
-        spin_amount=8,
-        damping=1,
-        angular_damping=0.01,
-        damping_velocity=2,
-        dt: float | Callable[[int], float] = 0.001, ):
+        origin: np.ndarray = np.array((0, 0, 0)),
+        gravity: np.ndarray = np.array((0, 0, -0.01)),
+        forward_impact: np.ndarray = np.array((0, 0, 0)),
+        explodiness: float = 2,
+        spin_amount: float = 8,
+        damping: float = 0.01,
+        angular_damping: float = 0.01,
+        damping_velocity: float = 2,
+        dt: float | Callable[[int], float] = 0.001, ) -> Callable:
     rs = (section.center_of_mass() - origin for section in section_meshes)
     # inverse square law
     velocities = [explodiness * r * np.power(np.dot(r, r), -3 / 2) / section.volume
@@ -196,6 +196,15 @@ def switch_object_right():
 
 # Add function to load
 
+def reset():
+    global main_mesh_actor, section_actors
+    p.remove_actor(main_mesh_actor)
+    for sa in section_actors:
+        p.remove_actor(sa)
+    main_mesh_actor = p.add_mesh(test_mesh, **glass_texture)
+    section_actors = []
+    p.update()
+
 
 def generate_points(size: int, origin: np.ndarray = None, spread: float = 1, df: int = 3):
     # https://mathworld.wolfram.com/SpherePointPicking.html
@@ -221,7 +230,9 @@ def generate_points(size: int, origin: np.ndarray = None, spread: float = 1, df:
 
 def smooth_ramp(initial, final, timescale=100, midpoint=100):
     def do_the_thing(t):
-        frac = 1/(1 + np.exp(-(t-midpoint) / timescale))
+        t -= midpoint
+        t /= timescale
+        frac = 1/(1 + np.exp(-t))
         return initial * (1 - frac) + final * frac
 
     return do_the_thing
@@ -238,7 +249,7 @@ def play_music():
     # Load audio file
     mixer.music.load('danceofpales.mp3')  # BGM
     # Set preferred volume
-    mixer.music.set_volume(0.2)
+    mixer.music.set_volume(0.01)
     mixer.music.play(loops=-1)  # set loops to -1 to loop indefinitely, start at 0.0
 
 
@@ -271,15 +282,16 @@ def explode(point=np.array((0, 0, 0))):
         ac = p.add_mesh(s, **glass_texture)
         section_actors.append(ac)
     do_physics = make_physics_function(
-        dt=smooth_ramp(0.0005, 0.005, 10, 100)
+        explodiness=2,
+        dt=smooth_ramp(0.0005, 0.016, 5, 80)
     )
 
-    start_time = time.perf_counter()
+    # start_time = time.perf_counter()
     iterations = 600
     for i in range(iterations):  # How long the glass breaking animation lasts
         do_physics()
-    end_time = time.perf_counter()
-    print(f"SPF: {iterations/(end_time-start_time)}")
+    # end_time = time.perf_counter()
+    # print(f"FPS: {iterations/(end_time-start_time)}")
 
 
 glass_texture = dict(color='white', pbr=True, metallic=0.8, roughness=0.1, diffuse=1, opacity=0.1,
@@ -343,6 +355,8 @@ if __name__ == "__main__":
     # ??? - test
 
     p.enable_surface_picking(callback=explode, left_clicking=True)
+
+    p.add_key_event("r", reset)
 
     # p.enable_eye_dome_lighting()
     p.show()
