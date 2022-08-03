@@ -1,5 +1,6 @@
 import time
 from collections import defaultdict
+from typing import Callable
 
 import numpy as np
 import pyvista as pv
@@ -70,35 +71,43 @@ def split_voronoi(mesh: pv.PolyData, point_cloud: pv.PolyData):
     return sections
 
 
-
 def make_physics_function(
         origin=np.array((0, 0, 0)),
         gravity=np.array((0, 0, 0)),
         forward_impact=np.array((0, 0, 0)),
-        explodiness=1,
-        spin_amount=4,
+        explodiness=2,
+        spin_amount=8,
         damping=1,
-        angular_damping=0.1,
-        damping_velocity=10,
-        delta_time=0.05,):
+        angular_damping=0.01,
+        damping_velocity=2,
+        dt: float | Callable[[int], float] = 0.001, ):
     rs = (section.center_of_mass() - origin for section in section_meshes)
     # inverse square law
     velocities = [explodiness * r * np.power(np.dot(r, r), -3 / 2) / section.volume
-                  + forward_impact / section.volume * np.power(np.dot(r, r), -1/2)
+                  + forward_impact / section.volume * np.power(np.dot(r, r), -1 / 2)
                   for r, section in zip(rs, section_meshes)]
     # kinda hackish way to give everything a random rotation but oh well
     angular_axes = [np.random.random(3) - 0.5 for _ in section_meshes]
     angular_velocities = [spin_amount / section.volume for section in section_meshes]
+    t = 0
 
     def do_the_thing():
-        for i, (v, section, axis, omega) in enumerate(zip(velocities, section_meshes, angular_axes, angular_velocities)):
+        nonlocal t
+        if isinstance(dt, float):
+            delta_time = dt
+        else:
+            t += 1
+            delta_time = dt(t)
+
+        for i, (v, section, axis, omega) in enumerate(
+                zip(velocities, section_meshes, angular_axes, angular_velocities)):
             section.translate(v * delta_time, inplace=True)
-            section.rotate_vector(axis, omega*delta_time, point=section.center_of_mass(), inplace=True)
+            section.rotate_vector(axis, omega * delta_time, point=section.center_of_mass(), inplace=True)
             v += gravity * delta_time
-            # simulate some kind of turbulence
+            # simulate some kind of turbulence idk
             if np.linalg.norm(v) > damping_velocity:
                 v *= (1 - damping * delta_time)
-            angular_velocities[i] *= (1-angular_damping-delta_time)
+            angular_velocities[i] *= (1 - angular_damping - delta_time)
 
         p.update()
 
@@ -145,7 +154,7 @@ def setup_scene():
 
     # https://docs.pyvista.org/api/utilities/_autosummary/pyvista.cubemap.html
     # p.add_actor(cubemap.to_skybox())
-    cubemap = pv.cubemap('cubemap_test', 'spacehigh',  '.jpg')
+    cubemap = pv.cubemap('cubemap_test', 'spacehigh', '.jpg')
     # create a cubemap from the 6 images, arguments are the Directory folder, followed by the prefix for the images, followed by the image extension
     p.add_actor(cubemap.to_skybox())  # convert cubemap to skybox
     p.set_environment_texture(cubemap)  # For reflecting the environment off the mesh
@@ -210,6 +219,14 @@ def generate_points(size: int, origin: np.ndarray = None, spread: float = 1, df:
     return np.vstack((xs, ys, zs)).transpose() + origins
 
 
+def smooth_ramp(initial, final, timescale=100, midpoint=100):
+    def do_the_thing(t):
+        frac = 1/(1 + np.exp(-(t-midpoint) / timescale))
+        return initial * (1 - frac) + final * frac
+
+    return do_the_thing
+
+
 def play_music():
     # Playing Sounds !!!
     # make sure to pip install pygame and copy the libmpg123.dll from pygame folder to Windows/System32
@@ -228,12 +245,12 @@ def play_music():
 def explode(point=np.array((0, 0, 0))):
     global main_mesh_actor, section_actors, section_meshes
 
-    mixer.Channel(0).play(mixer.Sound("break.mp3"), maxtime=1200)
-    time.sleep(0.2)
-
     if main_mesh_actor is None or len(section_actors) > 0:
         print("can't explode")
         return
+
+    mixer.Channel(0).play(mixer.Sound("break.mp3"), maxtime=1200)
+    time.sleep(0.2)
     points = generate_points(50, origin=point, df=3)
     point_cloud = pv.PolyData(points)
 
@@ -253,15 +270,21 @@ def explode(point=np.array((0, 0, 0))):
         # Try using PBR mode for more realism, PBR only works with PolyData
         ac = p.add_mesh(s, **glass_texture)
         section_actors.append(ac)
-    do_physics = make_physics_function()
+    do_physics = make_physics_function(
+        dt=smooth_ramp(0.0005, 0.005, 10, 100)
+    )
 
-    for i in range(1000):  # How long the glass breaking animation lasts
+    start_time = time.perf_counter()
+    iterations = 600
+    for i in range(iterations):  # How long the glass breaking animation lasts
         do_physics()
+    end_time = time.perf_counter()
+    print(f"SPF: {iterations/(end_time-start_time)}")
 
 
-glass_texture = dict(color='white', pbr=True, metallic=1, roughness=0.1, diffuse=1, opacity=0.1,
-                        smooth_shading=True,
-                        use_transparency=True, specular=5)
+glass_texture = dict(color='white', pbr=True, metallic=0.8, roughness=0.1, diffuse=1, opacity=0.1,
+                     smooth_shading=True,
+                     use_transparency=True)
 
 if __name__ == "__main__":
     main_mesh_actor = None
@@ -274,11 +297,11 @@ if __name__ == "__main__":
     play_music()
 
     # With Glass Model
-    filename = "data/Glass.stl"
+    filename = "data/GlassCup.stl"
     reader = pv.get_reader(filename)
     test_mesh = reader.read()
 
-    main_mesh_actor=p.add_mesh(test_mesh, **glass_texture)
+    main_mesh_actor = p.add_mesh(test_mesh, **glass_texture)
 
     # TESTING PBR (Physically Based Rendering)
     # Download skybox
@@ -292,14 +315,6 @@ if __name__ == "__main__":
     # https://docs.pyvista.org/api/utilities/_autosummary/pyvista.cubemap_from_filenames.html?highlight=cube+map#pyvista.cubemap_from_filenames
     #  - TEST
     # specify 6 images as the cube faces
-    """image_paths = [
-    'ballroom.jpg',
-    'ballroom.jpg',
-    'ballroom.jpg',
-    'ballroom.jpg',
-    'ballroom.jpg',
-    'ballroom.jpg',
-    ]"""
     # cubemap = pv.cubemap_from_filenames(image_paths=image_paths)  
 
     # https://docs.pyvista.org/api/utilities/_autosummary/pyvista.cubemap.html
