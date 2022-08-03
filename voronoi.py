@@ -177,31 +177,33 @@ def setup_scene():
 
 
 # ADD function to Regenerate/respawn Glass model after it has been destroyed - Buggy, when regenerating the texture is completely white also does not break anymore
-def regen_glass():
-    p.clear()  # clear plot and remove all actors and properties
-    ss = split_voronoi(test_mesh, test_point_cloud)
-    p.add_points(test_point_cloud)
-
-    for s in ss:
-        if s.n_points > 0:
-            c = (random.random(), random.random(), random.random())
-            p.add_mesh(s, **glass_texture)
-
-    p.update()
-
-
 # Added function to play background music BGM
 
 # IDEAS: Add function to SWITCH what kind of object/3D MODEL to BREAK !!!
 # The idea is like a left/right button to scroll through list of objects
 # May need a list of all objects to load and object models as well
-def switch_object_left():
-    return True
+def switch_object_right(): # change model to NEXT in the list
+    global model_index , list_of_models, test_mesh, text_actor #global variable for model index and list of all models, and text actor
+    model_index = (model_index + 1) % 11
+    filename = list_of_models[model_index]
+    reader = pv.get_reader(filename)
+    test_mesh = reader.read()
+    p.remove_actor(text_actor) #remove text actor
+    text_actor = p.add_text(list_of_names[model_index], position='lower_left', color='blue',
+                       shadow=True, font_size=26) # update the text based on the model index and add it as an actor
+    reset()
 
 
-def switch_object_right():
-    return True
-
+def switch_object_left(): # change model to PREV in the list
+    global model_index , list_of_models, test_mesh, text_actor #global variable for model index and list of all models, and text actor
+    model_index = (model_index - 1) % 11
+    filename = list_of_models[model_index]
+    reader = pv.get_reader(filename)
+    test_mesh = reader.read()
+    p.remove_actor(text_actor)
+    text_actor = p.add_text(list_of_names[model_index], position='lower_left', color='blue',
+                       shadow=True, font_size=26)
+    reset()
 
 # Add function to load
 
@@ -318,6 +320,9 @@ glass_texture = dict(color='white', pbr=True, metallic=0.8, roughness=0.1, diffu
                      use_transparency=True)
 
 if __name__ == "__main__":
+    model_index = 0 #to determine which model is currently selected, there are a total of 11 models
+    list_of_models = ["data/Ashtray.stl", "data/BottleCap.stl", "data/BottleVer2.stl", "data/GlassCup.stl", "data/JewelV2.stl", "data/Orb.stl", "data/GlassPane.stl", "data/Plate.stl", "data/PotionHigh.stl", "data/Prism.stl", "data/WineLowPoly.stl"] #list of all available 3D models
+    list_of_names = ["Ashtray","Bottle Cap", "Bottle", "Cup", "Jewel", "Orb", "Pane", "Plate", "Potion", "Prism", "Wine"] # list of texts corresponding to object models
     main_mesh_actor = None
     section_actors = []
     section_meshes = []
@@ -328,7 +333,7 @@ if __name__ == "__main__":
     play_music()
 
     # With Glass Model
-    filename = "data/Orb.stl"
+    filename = "data/Ashtray.stl"
     reader = pv.get_reader(filename)
     test_mesh = reader.read()
 
@@ -362,8 +367,8 @@ if __name__ == "__main__":
     # https://docs.pyvista.org/api/plotting/_autosummary/pyvista.Plotter.add_camera_orientation_widget.html
     # p.add_camera_orientation_widget()
 
-    # ADD TEXT
-    actor = p.add_text('Glass Cup', position='lower_left', color='blue',
+    # ADD TEXT actor
+    text_actor = p.add_text('Ashtray', position='lower_left', color='blue',
                        shadow=True, font_size=26)
 
     # enable anti aliasing
@@ -403,6 +408,13 @@ if __name__ == "__main__":
     p.add_key_event("r", reset)
 
     p.show_axes()
+
+    # Switch object to next object in list
+    p.add_key_event("x", switch_object_right)
+    p.add_key_event("X", switch_object_right)
+    # Switch object to prev object in list
+    p.add_key_event("z", switch_object_left)
+    p.add_key_event("Z", switch_object_left)
 
     # p.enable_eye_dome_lighting()
     p.show()
