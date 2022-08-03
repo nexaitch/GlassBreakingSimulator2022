@@ -1,6 +1,6 @@
 import time
 from collections import defaultdict
-from typing import Callable
+from typing import Callable, Dict, Any
 
 import numpy as np
 import pyvista as pv
@@ -73,19 +73,28 @@ def split_voronoi(mesh: pv.PolyData, point_cloud: pv.PolyData):
 
 def make_physics_function(
         origin: np.ndarray = np.array((0, 0, 0)),
-        gravity: np.ndarray = np.array((0, 0, -0.01)),
-        forward_impact: np.ndarray = np.array((0, 0, 0)),
+        gravity: np.ndarray = np.array((0, 0, 0)),
+        forward_impact: np.ndarray = np.array((0, -1, 0)),
         explodiness: float = 2,
         spin_amount: float = 8,
         damping: float = 0.01,
         angular_damping: float = 0.01,
         damping_velocity: float = 2,
-        dt: float | Callable[[int], float] = 0.001, ) -> Callable:
-    rs = (section.center_of_mass() - origin for section in section_meshes)
+        dt: float | Callable[[int], float] = 0.001,
+        randomness: float = 0,
+) -> Callable:
+    rs = [section.center_of_mass() - origin for section in section_meshes]
+
+    fl = np.linalg.norm(forward_impact)
+    # forward direction
+    fd = np.zeros(3) if fl < 1e-6 else forward_impact / fl
+
+    r_perpendicular_components = [r - np.dot(r, fd) * fd for r in rs]
     # inverse square law
-    velocities = [explodiness * r * np.power(np.dot(r, r), -3 / 2) / section.volume
-                  + forward_impact / section.volume * np.power(np.dot(r, r), -1 / 2)
-                  for r, section in zip(rs, section_meshes)]
+    velocities = [(explodiness * r * np.power(np.dot(r, r), -3 / 2)
+                  + forward_impact * np.power(np.dot(r_perpendicular, r_perpendicular), -1 / 2)
+                  + np.random.randn(3) * randomness) / section.volume
+                  for r, r_perpendicular, section in zip(rs, r_perpendicular_components, section_meshes)]
     # kinda hackish way to give everything a random rotation but oh well
     angular_axes = [np.random.random(3) - 0.5 for _ in section_meshes]
     angular_velocities = [spin_amount / section.volume for section in section_meshes]
@@ -262,7 +271,7 @@ def explode(point=np.array((0, 0, 0))):
 
     mixer.Channel(0).play(mixer.Sound("break.mp3"), maxtime=1200)
     time.sleep(0.2)
-    points = generate_points(50, origin=point, df=3)
+    points = generate_points(params["fragment count"], origin=point, df=params["df"], spread=params["scale"])
     point_cloud = pv.PolyData(points)
 
     section_meshes = split_voronoi(test_mesh, point_cloud)
@@ -277,13 +286,17 @@ def explode(point=np.array((0, 0, 0))):
     p.update()
 
     for s in section_meshes:
-        c = (random.random(), random.random(), random.random())
         # Try using PBR mode for more realism, PBR only works with PolyData
         ac = p.add_mesh(s, **glass_texture)
         section_actors.append(ac)
+
+    instant = 2
+    smooth = 0.2
     do_physics = make_physics_function(
-        explodiness=2,
-        dt=smooth_ramp(0.0005, 0.016, 5, 80)
+        explodiness=params["explodiness"],
+        forward_impact=np.array((0, -1, 0)) * params["impact"],
+        randomness=params["randomness"],
+        dt=smooth_ramp(1/60/params["slow motion"], 1/60, smooth * params["slow motion"], instant * params["slow motion"])
     )
 
     # start_time = time.perf_counter()
@@ -292,6 +305,12 @@ def explode(point=np.array((0, 0, 0))):
         do_physics()
     # end_time = time.perf_counter()
     # print(f"FPS: {iterations/(end_time-start_time)}")
+
+
+def update_property(param_name: str, params_dict: Dict[str, Any], preprocessing=lambda x: x):
+    def do_the_thing(value):
+        params_dict[param_name] = preprocessing(value)
+    return do_the_thing
 
 
 glass_texture = dict(color='white', pbr=True, metallic=0.8, roughness=0.1, diffuse=1, opacity=0.1,
@@ -354,9 +373,36 @@ if __name__ == "__main__":
     # https://docs.pyvista.org/api/plotting/_autosummary/pyvista.Plotter.enable_depth_peeling.html
     # ??? - test
 
-    p.enable_surface_picking(callback=explode, left_clicking=True)
+    p.enable_surface_picking(callback=explode, left_clicking=True, show_message="Click to explode, R to reset")
+
+    params = {
+        "explodiness": 0.5,
+        "df": 3,
+        "scale": 1,
+        "fragment count": 50,
+        "impact": 1,
+        "randomness": 0,
+        "slow motion": 30,
+    }
+
+    p.add_slider_widget(update_property("explodiness", params), (0, 3), params["explodiness"], "explodiness",
+                        pointa=(0.6, 0.9), pointb=(0.9, 0.9), style="modern")
+    p.add_slider_widget(update_property("df", params, int), (2, 20), params["df"], "df", fmt="%.0f",
+                        pointa=(0.6, 0.8), pointb=(0.9, 0.8), style="modern")
+    p.add_slider_widget(update_property("scale", params), (0.5, 5), params["scale"], "scale",
+                        pointa=(0.6, 0.7), pointb=(0.9, 0.7), style="modern")
+    p.add_slider_widget(update_property("fragment count", params, int), (10, 100), params["fragment count"], "fragment count", fmt="%.0f",
+                        pointa=(0.6, 0.6), pointb=(0.9, 0.6), style="modern")
+    p.add_slider_widget(update_property("impact", params), (0, 2), params["impact"], "impact",
+                        pointa=(0.6, 0.5), pointb=(0.9, 0.5), style="modern")
+    p.add_slider_widget(update_property("randomness", params), (0, 3), params["randomness"], "randomness",
+                        pointa=(0.6, 0.4), pointb=(0.9, 0.4), style="modern")
+    p.add_slider_widget(update_property("slow motion", params), (1, 100), params["slow motion"], "slow motion",
+                        pointa=(0.6, 0.3), pointb=(0.9, 0.3), style="modern")
 
     p.add_key_event("r", reset)
+
+    p.show_axes()
 
     # p.enable_eye_dome_lighting()
     p.show()
