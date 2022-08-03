@@ -83,12 +83,18 @@ def make_physics_function(
         dt: float | Callable[[int], float] = 0.001,
         randomness: float = 0,
 ) -> Callable:
-    rs = (section.center_of_mass() - origin for section in section_meshes)
+    rs = [section.center_of_mass() - origin for section in section_meshes]
+
+    fl = np.linalg.norm(forward_impact)
+    # forward direction
+    fd = np.zeros(3) if fl < 1e-6 else forward_impact / fl
+
+    r_perpendicular_components = [r - np.dot(r, fd) * fd for r in rs]
     # inverse square law
     velocities = [(explodiness * r * np.power(np.dot(r, r), -3 / 2)
-                  + forward_impact * np.power(np.dot(r, r), -1 / 2)
+                  + forward_impact * np.power(np.dot(r_perpendicular, r_perpendicular), -1 / 2)
                   + np.random.randn(3) * randomness) / section.volume
-                  for r, section in zip(rs, section_meshes)]
+                  for r, r_perpendicular, section in zip(rs, r_perpendicular_components, section_meshes)]
     # kinda hackish way to give everything a random rotation but oh well
     angular_axes = [np.random.random(3) - 0.5 for _ in section_meshes]
     angular_velocities = [spin_amount / section.volume for section in section_meshes]
@@ -370,7 +376,7 @@ if __name__ == "__main__":
     p.enable_surface_picking(callback=explode, left_clicking=True, show_message=False)
 
     params = {
-        "explodiness": 2,
+        "explodiness": 0.5,
         "df": 3,
         "scale": 1,
         "fragment count": 50,
@@ -379,7 +385,7 @@ if __name__ == "__main__":
         "slow motion": 30,
     }
 
-    p.add_slider_widget(update_property("explodiness", params), (0, 10), params["explodiness"], "explodiness",
+    p.add_slider_widget(update_property("explodiness", params), (0, 3), params["explodiness"], "explodiness",
                         pointa=(0.6, 0.9), pointb=(0.9, 0.9), style="modern")
     p.add_slider_widget(update_property("df", params, int), (2, 20), params["df"], "df", fmt="%.0f",
                         pointa=(0.6, 0.8), pointb=(0.9, 0.8), style="modern")
@@ -387,7 +393,7 @@ if __name__ == "__main__":
                         pointa=(0.6, 0.7), pointb=(0.9, 0.7), style="modern")
     p.add_slider_widget(update_property("fragment count", params, int), (10, 100), params["fragment count"], "fragment count", fmt="%.0f",
                         pointa=(0.6, 0.6), pointb=(0.9, 0.6), style="modern")
-    p.add_slider_widget(update_property("impact", params), (0, 10), params["impact"], "impact",
+    p.add_slider_widget(update_property("impact", params), (0, 2), params["impact"], "impact",
                         pointa=(0.6, 0.5), pointb=(0.9, 0.5), style="modern")
     p.add_slider_widget(update_property("randomness", params), (0, 3), params["randomness"], "randomness",
                         pointa=(0.6, 0.4), pointb=(0.9, 0.4), style="modern")
