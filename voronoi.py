@@ -328,7 +328,7 @@ if __name__ == "__main__":
     play_music()
 
     # With Glass Model
-    filename = "data/GlassCup.stl"
+    filename = "data/Orb.stl"
     reader = pv.get_reader(filename)
     test_mesh = reader.read()
 
@@ -395,7 +395,7 @@ if __name__ == "__main__":
                         pointa=(0.6, 0.6), pointb=(0.9, 0.6), style="modern")
     p.add_slider_widget(update_property("impact", params), (0, 2), params["impact"], "impact",
                         pointa=(0.6, 0.5), pointb=(0.9, 0.5), style="modern")
-    p.add_slider_widget(update_property("randomness", params), (0, 3), params["randomness"], "randomness",
+    p.add_slider_widget(update_property("randomness", params, lambda x: x*x), (0, 1), params["randomness"], "randomness",
                         pointa=(0.6, 0.4), pointb=(0.9, 0.4), style="modern")
     p.add_slider_widget(update_property("slow motion", params), (1, 100), params["slow motion"], "slow motion",
                         pointa=(0.6, 0.3), pointb=(0.9, 0.3), style="modern")
