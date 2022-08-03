@@ -73,8 +73,8 @@ def split_voronoi(mesh: pv.PolyData, point_cloud: pv.PolyData):
 
 def make_physics_function(
         origin=np.array((0, 0, 0)),
-        gravity=np.array((0, 0, -0.5)),
-        forward_impact=np.array((0, -5, 0)),
+        gravity=np.array((0, 0, 0)),
+        forward_impact=np.array((0, 0, 0)),
         explodiness=1,
         spin_amount=4,
         damping=1,
@@ -84,7 +84,7 @@ def make_physics_function(
     rs = (section.center_of_mass() - origin for section in section_meshes)
     # inverse square law
     velocities = [explodiness * r * np.power(np.dot(r, r), -3 / 2) / section.volume
-                  + forward_impact / section.volume / np.dot(r, r)
+                  + forward_impact / section.volume * np.power(np.dot(r, r), -1/2)
                   for r, section in zip(rs, section_meshes)]
     # kinda hackish way to give everything a random rotation but oh well
     angular_axes = [np.random.random(3) - 0.5 for _ in section_meshes]
@@ -234,7 +234,7 @@ def explode(point=np.array((0, 0, 0))):
     if main_mesh_actor is None or len(section_actors) > 0:
         print("can't explode")
         return
-    points = generate_points(50, origin=point, df=4)
+    points = generate_points(50, origin=point, df=3)
     point_cloud = pv.PolyData(points)
 
     section_meshes = split_voronoi(test_mesh, point_cloud)
