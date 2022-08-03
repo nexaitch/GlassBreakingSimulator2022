@@ -283,7 +283,7 @@ def explode(point=np.array((0, 0, 0))):
         section_actors.append(ac)
     do_physics = make_physics_function(
         explodiness=2,
-        dt=smooth_ramp(0.0005, 0.016, 5, 80)
+        dt=smooth_ramp(0.001, 0.016, 5, 80)
     )
 
     # start_time = time.perf_counter()
