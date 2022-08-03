@@ -70,55 +70,36 @@ def split_voronoi(mesh: pv.PolyData, point_cloud: pv.PolyData):
     return sections
 
 
-# Test Callback Functions
-def multimove():
-    # Play the glass breaking sound effect
-    mixer.Channel(0).play(mixer.Sound("break.mp3"),
-                          maxtime=1200)  # use channels to play SFX on top of background music, use maxtime to stop after certain miliseconds
-    time.sleep(0.4)  # delay 0.4 seconds to make sound match the (current) breaking animation
-    # https://www.pygame.org/docs/ref/music.html
-    for i in range(1, 100, 1):  # How long the glass breaking animation lasts
-        move()
-        p.update()  # update the plot
 
-
-def make_physics_function(origin=np.array((0, 0, 0)), gravity=np.array((0, 0, 0.5)), explodiness=100, spin_amount=2, delta_time=0.05):
+def make_physics_function(
+        origin=np.array((0, 0, 0)),
+        gravity=np.array((0, 0, -0.5)),
+        explodiness=1,
+        spin_amount=2,
+        damping=1,
+        angular_damping=0.1,
+        damping_velocity=10,
+        delta_time=0.05,):
     rs = (section.center_of_mass() - origin for section in section_meshes)
     # inverse square law
-    velocities = [explodiness * r * np.power(np.dot(r, r) / section.volume, -3 / 2) for r, section in zip(rs, section_meshes)]
+    velocities = [explodiness * r * np.power(np.dot(r, r), -3 / 2) / section.volume for r, section in zip(rs, section_meshes)]
     # kinda hackish way to give everything a random rotation but oh well
     angular_axes = [np.random.random(3) - 0.5 for _ in section_meshes]
     angular_velocities = [spin_amount / section.volume for section in section_meshes]
 
     def do_the_thing():
-        for v, section, axis, omega in zip(velocities, section_meshes, angular_axes, angular_velocities):
+        for i, (v, section, axis, omega) in enumerate(zip(velocities, section_meshes, angular_axes, angular_velocities)):
             section.translate(v * delta_time, inplace=True)
             section.rotate_vector(axis, omega*delta_time, point=section.center_of_mass(), inplace=True)
-            v -= gravity * delta_time
+            v += gravity * delta_time
+            # simulate some kind of turbulence
+            if np.linalg.norm(v) > damping_velocity:
+                v *= (1 - damping * delta_time)
+            angular_velocities[i] *= (1-angular_damping-delta_time)
+
         p.update()
 
     return do_the_thing
-
-
-def move():
-    special_point = np.array((0, 0, 0))
-    for s in section_meshes:
-        if s.n_points > 0:
-            s_vector = np.array(s.center)  # center of the bounding box
-            d_vector = s_vector - special_point
-            # s = s.translate((np.random.random(),np.random.random(),np.random.random()) , inplace=True)
-            s = s.translate((d_vector[0] / 10, d_vector[1] / 10, d_vector[2] / 10), inplace=True)
-            # vector components to move the glass, Divide by a larger number to make it slower, multiply to make faster
-    p.update()
-
-
-def rotate():
-    for s in section_meshes:
-        if s.n_points > 0:
-            s = s.rotate_vector((np.random.random(), np.random.random(), np.random.random()),
-                                np.random.randint(low=0, high=90, size=None, dtype=int), inplace=True)
-            # inplace = True to update mesh
-    p.update()
 
 
 def setup_scene():
@@ -226,15 +207,6 @@ def generate_points(size: int, origin: np.ndarray = None, spread: float = 1, df:
     return np.vstack((xs, ys, zs)).transpose() + origins
 
 
-# Splitting/Cracking Callback function, crack the glass or object more and more upon button click - Need to Edit n fix
-def more_cracks():
-    for s in section_meshes:
-        if s.n_points > 0:
-            p = p
-            # inplace = True to update mesh
-    p.update()
-
-
 def play_music():
     # Playing Sounds !!!
     # make sure to pip install pygame and copy the libmpg123.dll from pygame folder to Windows/System32
@@ -252,6 +224,11 @@ def play_music():
 
 def explode(point=np.array((0, 0, 0))):
     global main_mesh_actor, section_actors, section_meshes
+
+    mixer.Channel(0).play(mixer.Sound("break.mp3"),
+                          maxtime=1200)
+    time.sleep(0.2)
+
     if main_mesh_actor is None or len(section_actors) > 0:
         print("can't explode")
         return
@@ -297,7 +274,7 @@ if __name__ == "__main__":
     play_music()
 
     # With Glass Model
-    filename = "data/GlassCup.stl"
+    filename = "data/BottleVer2.stl"
     reader = pv.get_reader(filename)
     test_mesh = reader.read()
 
