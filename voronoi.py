@@ -82,16 +82,16 @@ def multimove():
         p.update()  # update the plot
 
 
-def make_physics_function(origin=np.array((0, 0, 0)), gravity=np.array((0, 0, 0.5)), explodiness=40, spin_amount=2, delta_time=0.1):
-    rs = (section.center_of_mass() - origin for section in ss)
+def make_physics_function(origin=np.array((0, 0, 0)), gravity=np.array((0, 0, 0.5)), explodiness=100, spin_amount=2, delta_time=0.05):
+    rs = (section.center_of_mass() - origin for section in section_meshes)
     # inverse square law
-    velocities = [explodiness * r * np.power(np.dot(r, r) / section.volume, -3 / 2) for r, section in zip(rs, ss)]
+    velocities = [explodiness * r * np.power(np.dot(r, r) / section.volume, -3 / 2) for r, section in zip(rs, section_meshes)]
     # kinda hackish way to give everything a random rotation but oh well
-    angular_axes = [np.random.random(3)-0.5 for _ in ss]
-    angular_velocities = [spin_amount / section.volume for section in ss]
+    angular_axes = [np.random.random(3) - 0.5 for _ in section_meshes]
+    angular_velocities = [spin_amount / section.volume for section in section_meshes]
 
     def do_the_thing():
-        for v, section, axis, omega in zip(velocities, ss, angular_axes, angular_velocities):
+        for v, section, axis, omega in zip(velocities, section_meshes, angular_axes, angular_velocities):
             section.translate(v * delta_time, inplace=True)
             section.rotate_vector(axis, omega*delta_time, point=section.center_of_mass(), inplace=True)
             v -= gravity * delta_time
@@ -102,7 +102,7 @@ def make_physics_function(origin=np.array((0, 0, 0)), gravity=np.array((0, 0, 0.
 
 def move():
     special_point = np.array((0, 0, 0))
-    for s in ss:
+    for s in section_meshes:
         if s.n_points > 0:
             s_vector = np.array(s.center)  # center of the bounding box
             d_vector = s_vector - special_point
@@ -113,7 +113,7 @@ def move():
 
 
 def rotate():
-    for s in ss:
+    for s in section_meshes:
         if s.n_points > 0:
             s = s.rotate_vector((np.random.random(), np.random.random(), np.random.random()),
                                 np.random.randint(low=0, high=90, size=None, dtype=int), inplace=True)
@@ -183,8 +183,7 @@ def regen_glass():
     for s in ss:
         if s.n_points > 0:
             c = (random.random(), random.random(), random.random())
-            p.add_mesh(s, style='surface', lighting=True, opacity=0.1, smooth_shading=True, ambient=0, diffuse=1,
-                       specular=5, specular_power=128, use_transparency=True, metallic=1, roughness=0.0)
+            p.add_mesh(s, **glass_texture)
 
     p.update()
 
@@ -229,7 +228,7 @@ def generate_points(size: int, origin: np.ndarray = None, spread: float = 1, df:
 
 # Splitting/Cracking Callback function, crack the glass or object more and more upon button click - Need to Edit n fix
 def more_cracks():
-    for s in ss:
+    for s in section_meshes:
         if s.n_points > 0:
             p = p
             # inplace = True to update mesh
@@ -252,22 +251,35 @@ def play_music():
 
 
 def explode(point=np.array((0, 0, 0))):
-    global main_mesh_actor, section_actors
+    global main_mesh_actor, section_actors, section_meshes
     if main_mesh_actor is None or len(section_actors) > 0:
         print("can't explode")
         return
     points = generate_points(50, origin=point, df=4)
-    test_point_cloud = pv.PolyData(points)
+    point_cloud = pv.PolyData(points)
 
-    ss = split_voronoi(test_mesh, test_point_cloud)
-    # p.add_points(test_point_cloud)
+    section_meshes = split_voronoi(test_mesh, point_cloud)
 
     section_actors = []
-    for s in ss:
+
+    for s in section_meshes:
+        c = (random.random(), random.random(), random.random())
+        # Try using PBR mode for more realism, PBR only works with PolyData
+        p.add_mesh(s, color='white', pbr=True, metallic=1, roughness=0.1, diffuse=1, opacity=0.1, smooth_shading=True,
+                   use_transparency=True, specular=5)
+
+    p.remove_actor(main_mesh_actor)
+    p.update()
+
+    for s in section_meshes:
         c = (random.random(), random.random(), random.random())
         # Try using PBR mode for more realism, PBR only works with PolyData
         ac = p.add_mesh(s, **glass_texture)
         section_actors.append(ac)
+    do_physics = make_physics_function()
+
+    for i in range(1000):  # How long the glass breaking animation lasts
+        do_physics()
 
 
 glass_texture = dict(color='white', pbr=True, metallic=1, roughness=0.1, diffuse=1, opacity=0.1,
@@ -276,7 +288,8 @@ glass_texture = dict(color='white', pbr=True, metallic=1, roughness=0.1, diffuse
 
 if __name__ == "__main__":
     main_mesh_actor = None
-    section_actors = None
+    section_actors = []
+    section_meshes = []
     p = pv.Plotter()
 
     import random
@@ -318,12 +331,6 @@ if __name__ == "__main__":
     # create a cubemap from the 6 images, arguments are the Directory folder, followed by the prefix for the images, followed by the image extension
     p.add_actor(cubemap.to_skybox())  # convert cubemap to skybox
     p.set_environment_texture(cubemap)  # For reflecting the environment off the mesh
-
-    for s in ss:
-        c = (random.random(), random.random(), random.random())
-        # Try using PBR mode for more realism, PBR only works with PolyData
-        p.add_mesh(s, color='white', pbr=True, metallic=1, roughness=0.1, diffuse=1, opacity=0.1, smooth_shading=True,
-                   use_transparency=True, specular=5)
     # More functions
 
     # p.add_background_image("ballroom.jpg")
@@ -342,6 +349,8 @@ if __name__ == "__main__":
     # use depth_peeling for better translucent material
     # https://docs.pyvista.org/api/plotting/_autosummary/pyvista.Plotter.enable_depth_peeling.html
     # ??? - test
+
+    p.enable_surface_picking(callback=explode, left_clicking=True)
 
     # p.enable_eye_dome_lighting()
     p.show()
