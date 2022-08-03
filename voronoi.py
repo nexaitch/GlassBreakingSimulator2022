@@ -74,15 +74,18 @@ def split_voronoi(mesh: pv.PolyData, point_cloud: pv.PolyData):
 def make_physics_function(
         origin=np.array((0, 0, 0)),
         gravity=np.array((0, 0, -0.5)),
+        forward_impact=np.array((0, -5, 0)),
         explodiness=1,
-        spin_amount=2,
+        spin_amount=4,
         damping=1,
         angular_damping=0.1,
         damping_velocity=10,
         delta_time=0.05,):
     rs = (section.center_of_mass() - origin for section in section_meshes)
     # inverse square law
-    velocities = [explodiness * r * np.power(np.dot(r, r), -3 / 2) / section.volume for r, section in zip(rs, section_meshes)]
+    velocities = [explodiness * r * np.power(np.dot(r, r), -3 / 2) / section.volume
+                  + forward_impact / section.volume / np.dot(r, r)
+                  for r, section in zip(rs, section_meshes)]
     # kinda hackish way to give everything a random rotation but oh well
     angular_axes = [np.random.random(3) - 0.5 for _ in section_meshes]
     angular_velocities = [spin_amount / section.volume for section in section_meshes]
@@ -225,8 +228,7 @@ def play_music():
 def explode(point=np.array((0, 0, 0))):
     global main_mesh_actor, section_actors, section_meshes
 
-    mixer.Channel(0).play(mixer.Sound("break.mp3"),
-                          maxtime=1200)
+    mixer.Channel(0).play(mixer.Sound("break.mp3"), maxtime=1200)
     time.sleep(0.2)
 
     if main_mesh_actor is None or len(section_actors) > 0:
@@ -240,10 +242,8 @@ def explode(point=np.array((0, 0, 0))):
     section_actors = []
 
     for s in section_meshes:
-        c = (random.random(), random.random(), random.random())
         # Try using PBR mode for more realism, PBR only works with PolyData
-        p.add_mesh(s, color='white', pbr=True, metallic=1, roughness=0.1, diffuse=1, opacity=0.1, smooth_shading=True,
-                   use_transparency=True, specular=5)
+        p.add_mesh(s, **glass_texture)
 
     p.remove_actor(main_mesh_actor)
     p.update()
@@ -274,7 +274,7 @@ if __name__ == "__main__":
     play_music()
 
     # With Glass Model
-    filename = "data/BottleVer2.stl"
+    filename = "data/Glass.stl"
     reader = pv.get_reader(filename)
     test_mesh = reader.read()
 
