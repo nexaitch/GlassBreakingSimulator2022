@@ -373,7 +373,7 @@ if __name__ == "__main__":
     # https://docs.pyvista.org/api/plotting/_autosummary/pyvista.Plotter.enable_depth_peeling.html
     # ??? - test
 
-    p.enable_surface_picking(callback=explode, left_clicking=True, show_message=False)
+    p.enable_surface_picking(callback=explode, left_clicking=True, show_message="Click to explode, R to reset")
 
     params = {
         "explodiness": 0.5,
