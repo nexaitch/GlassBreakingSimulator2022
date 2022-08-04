@@ -7,7 +7,8 @@ User Controls:
 2. Press R to restore the object to its unbroken state
 3. Press X to load the next object
 4. Press Z to load the previous object
-5. Click and drag the slider controls to change the simulation parameters
+5. Press Q to quit the simulator
+6. Click and drag the slider controls to change the simulation parameters
 
 Credits:
 Daniel Low, Leon Tjandra, Jonathan Wiggins, Mridula Thekkedath

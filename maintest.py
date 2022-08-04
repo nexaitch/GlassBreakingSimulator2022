@@ -197,7 +197,7 @@ def switch_object_right(): # change model to NEXT in the list
     reader = pv.get_reader(filename)
     test_mesh = reader.read()
     p.remove_actor(text_actor) #remove text actor
-    text_actor = p.add_text(list_of_names[model_index], position='lower_left', color='blue',
+    text_actor = p.add_text(list_of_names[model_index], position='lower_left', color='#E0EEEE',
                        shadow=True, font_size=26) # update the text based on the model index and add it as an actor
     reset()
 
@@ -209,7 +209,7 @@ def switch_object_left(): # change model to PREV in the list
     reader = pv.get_reader(filename)
     test_mesh = reader.read()
     p.remove_actor(text_actor)
-    text_actor = p.add_text(list_of_names[model_index], position='lower_left', color='blue',
+    text_actor = p.add_text(list_of_names[model_index], position='lower_left', color='#E0EEEE',
                        shadow=True, font_size=26)
     reset()
 
@@ -326,8 +326,11 @@ def update_property(param_name: str, params_dict: Dict[str, Any], preprocessing=
 glass_texture = dict(color='white', pbr=True, metallic=0.8, roughness=0.1, diffuse=1, opacity=0.1,
                      smooth_shading=True, use_transparency=True)
 
-
-
+# Buggy function to close window
+def closepv():
+    print("Exiting Glass Breaking Simulator")
+    p.close()
+    sys.exit() # to quit safely
 
 class Button():
     def __init__(self, img, bounds, txt_in, font, base_col, hover_col, break_style):
@@ -365,18 +368,14 @@ class Button():
             self.render_text = self.font.render(self.txt_in, True, self.base_col)
             self.img = self.render_text
 
-def closepv():
-    print("DEBUGGING")
-    p.close()
-
 def main_menu():
-    pg.display.set_caption("Glass Shattering Simulator")
+    pg.display.set_caption("Glass Breaking Simulator")
 
     while True:
         SCREEN.blit(SCALED_BG, (0, 0))
 
         MENU_MOUSE_POS = pg.mouse.get_pos()
-        MENU_TEXT = GAME_FONT.render("MAIN MENU", True, "antiquewhite3")
+        MENU_TEXT = GAME_FONT.render("GLASS BREAKING SIMULATOR", True, BASE_COLOUR)
         MENU_RECT = MENU_TEXT.get_rect(center=(400, 100))
 
         PLAY_BUTTON = Button(None, (400, 225), "PLAY", GAME_FONT, BASE_COLOUR, HOVER_COLOR, SCALED_SEL_MENU)
@@ -395,8 +394,6 @@ def main_menu():
                 sys.exit()
             if event.type == pg.MOUSEBUTTONDOWN:
                 if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
-                    pg.mouse.set_pos(0,0)
-                    PLAY_BUTTON.checkForInput = False
                     play()
                     # reset cursor position
                 if HELP_BUTTON.checkForInput(MENU_MOUSE_POS):
@@ -409,7 +406,7 @@ def main_menu():
 
 def play():
     pg.display.set_caption("Simulator")
-    p.show()
+    p.show(title="Glass Breaking Simulator - Play Mode",full_screen=True) #set to fullscreen
 
 def help():
     pg.display.set_caption("Help")
@@ -444,10 +441,9 @@ if __name__ == "__main__":
     pg.init()
 
     MAIN_DIR = os.path.dirname(__file__)
-
     SCREEN = pg.display.set_mode((800, 500))
-    GAME_FONT = pg.font.SysFont("Cambria", 40)
-    HELP_FONT = pg.font.SysFont("Cambria", 20)
+    GAME_FONT = pg.font.SysFont('Cambria', 40)
+    HELP_FONT = pg.font.SysFont("Cambria", 18)
 
     # assets
     BACKGROUND = pg.image.load(os.path.join(MAIN_DIR, "assets/background_alt4.png"))
@@ -471,6 +467,7 @@ if __name__ == "__main__":
     main_mesh_actor = None
     section_actors = []
     section_meshes = []
+
     p = pv.Plotter()
 
     import random
@@ -513,7 +510,7 @@ if __name__ == "__main__":
     # p.add_camera_orientation_widget()
 
     # ADD TEXT actor
-    text_actor = p.add_text('Ashtray', position='lower_left', color='blue',
+    text_actor = p.add_text('Ashtray', position='lower_left', color='#E0EEEE',
                        shadow=True, font_size=26)
 
     # enable anti aliasing
@@ -523,7 +520,7 @@ if __name__ == "__main__":
     # https://docs.pyvista.org/api/plotting/_autosummary/pyvista.Plotter.enable_depth_peeling.html
     # ??? - test
 
-    p.enable_surface_picking(callback=explode, left_clicking=True, show_message="Controls:\n - Click to explode \n - R to reset\n - Z to load Next model\n - X to load Prev model")
+    p.enable_surface_picking(callback=explode, left_clicking=True, font_size=12, show_message="Controls:\n - Click to explode \n - R to reset\n - Z to load Next model\n - X to load Prev model\n - Q to quit Simulator")
 
     params = {
         "explodiness": 0.5,
@@ -536,24 +533,22 @@ if __name__ == "__main__":
     }
 
     p.add_slider_widget(update_property("explodiness", params), (0, 3), params["explodiness"], "explodiness",
-                        pointa=(0.6, 0.9), pointb=(0.9, 0.9), style="modern")
+                        pointa=(0.75, 0.91), pointb=(0.98, 0.91), style="modern")
     p.add_slider_widget(update_property("df", params, int), (2, 20), params["df"], "df", fmt="%.0f",
-                        pointa=(0.6, 0.8), pointb=(0.9, 0.8), style="modern")
+                        pointa=(0.75, 0.78), pointb=(0.98, 0.78), style="modern")
     p.add_slider_widget(update_property("scale", params), (0.5, 5), params["scale"], "scale",
-                        pointa=(0.6, 0.7), pointb=(0.9, 0.7), style="modern")
+                        pointa=(0.75, 0.65), pointb=(0.98, 0.65), style="modern")
     p.add_slider_widget(update_property("fragment count", params, int), (10, 100), params["fragment count"], "fragment count", fmt="%.0f",
-                        pointa=(0.6, 0.6), pointb=(0.9, 0.6), style="modern")
+                        pointa=(0.75, 0.52), pointb=(0.98, 0.52), style="modern")
     p.add_slider_widget(update_property("impact", params), (0, 2), params["impact"], "impact",
-                        pointa=(0.6, 0.5), pointb=(0.9, 0.5), style="modern")
+                        pointa=(0.75, 0.39), pointb=(0.98, 0.39), style="modern")
     p.add_slider_widget(update_property("randomness", params, lambda x: x*x), (0, 1), params["randomness"], "randomness",
-                        pointa=(0.6, 0.4), pointb=(0.9, 0.4), style="modern")
+                        pointa=(0.75, 0.26), pointb=(0.98, 0.26), style="modern")
     p.add_slider_widget(update_property("slow motion", params), (1, 100), params["slow motion"], "slow motion",
-                        pointa=(0.6, 0.3), pointb=(0.9, 0.3), style="modern")
+                        pointa=(0.75, 0.13), pointb=(0.98, 0.13), style="modern")
 
     p.add_key_event("r", reset)
     p.add_key_event("R", reset)
-
-    p.add_key_event("m", closepv)
 
     p.show_axes()
 
@@ -564,7 +559,9 @@ if __name__ == "__main__":
     p.add_key_event("z", switch_object_left)
     p.add_key_event("Z", switch_object_left)
 
-    # p.enable_eye_dome_lighting()
+    # Function to quit
+    p.add_key_event("q", closepv)
+    p.add_key_event("Q", closepv)
     
     main_menu()
 
