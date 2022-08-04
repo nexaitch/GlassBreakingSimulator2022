@@ -1,0 +1,13 @@
+Welcome!
+
+Glass Breaking Simulator is a semi-realistic glass shattering simulator which allows the user to break different glass objects and observe how they shatter under various conditions.
+
+User Controls:
+1. Left-click any point on the object to break the glass
+2. Press R to restore the object to its unbroken state
+3. Press X to load the next object
+4. Press Z to load the previous object
+5. Click and drag the slider controls to change the simulation parameters
+
+Credits:
+Daniel Low, Leon Tjandra, Jonathan Wiggins, Mridula Thekkedath
