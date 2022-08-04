@@ -100,8 +100,8 @@ def make_physics_function(
     r_perpendicular_components = [r - np.dot(r, fd) * fd for r in rs]
     # inverse square law
     velocities = [(explodiness * r * np.power(np.dot(r, r), -3 / 2)
-                  + forward_impact * np.power(np.dot(r_perpendicular, r_perpendicular), -1 / 2)
                   + np.random.randn(3) * randomness) / section.volume
+                  + forward_impact * np.power(np.dot(r_perpendicular, r_perpendicular), -1 / 2) * 1
                   for r, r_perpendicular, section in zip(rs, r_perpendicular_components, section_meshes)]
     # kinda hackish way to give everything a random rotation but oh well
     angular_axes = [np.random.random(3) - 0.5 for _ in section_meshes]
@@ -304,7 +304,7 @@ def explode(point=np.array((0, 0, 0))):
     smooth = 0.2
     do_physics = make_physics_function(
         explodiness=params["explodiness"],
-        forward_impact=np.array((0, -1, 0)) * params["impact"],
+        forward_impact=np.array((0, -10, -4)) * params["impact"],
         randomness=params["randomness"],
         dt=smooth_ramp(1/60/params["slow motion"], 1/60, smooth * params["slow motion"], instant * params["slow motion"])
     )
@@ -564,7 +564,3 @@ if __name__ == "__main__":
     p.add_key_event("Q", closepv)
     
     main_menu()
-
-    
-
-    

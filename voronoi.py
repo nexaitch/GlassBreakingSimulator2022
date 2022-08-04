@@ -319,7 +319,8 @@ glass_texture = dict(color='white', pbr=True, metallic=0.8, roughness=0.1, diffu
                      smooth_shading=True, use_transparency=True)
 
 if __name__ == "__main__":
-    model_index = 0 #to determine which model is currently selected, there are a total of 11 models
+    model_index = 0
+    #to determine which model is currently selected, there are a total of 11 models
     list_of_models = ["data/Ashtray.stl", "data/BottleCap.stl", "data/BottleVer2.stl", "data/GlassCup.stl", "data/JewelV2.stl", "data/Orb.stl", "data/GlassPane.stl", "data/Plate.stl", "data/PotionHigh.stl", "data/Prism.stl", "data/WineLowPoly.stl"] #list of all available 3D models
     list_of_names = ["Ashtray","Bottle Cap", "Bottle", "Cup", "Jewel", "Orb", "Pane", "Plate", "Potion", "Prism", "Wine"] # list of texts corresponding to object models
     main_mesh_actor = None
