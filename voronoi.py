@@ -260,7 +260,7 @@ def play_music():
     # Load audio file
     mixer.music.load('danceofpales.mp3')  # BGM
     # Set preferred volume
-    mixer.music.set_volume(0.01)
+    mixer.music.set_volume(0.1) #0.1 is good
     mixer.music.play(loops=-1)  # set loops to -1 to loop indefinitely, start at 0.0
 
 
@@ -406,6 +406,7 @@ if __name__ == "__main__":
                         pointa=(0.6, 0.3), pointb=(0.9, 0.3), style="modern")
 
     p.add_key_event("r", reset)
+    p.add_key_event("R", reset)
 
     p.show_axes()
 
