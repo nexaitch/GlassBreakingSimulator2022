@@ -268,7 +268,7 @@ def play_music():
     # Load audio file
     mixer.music.load('assets/danceofpales.mp3')  # BGM
     # Set preferred volume
-    mixer.music.set_volume(0.01)
+    mixer.music.set_volume(0.1)
     mixer.music.play(loops=-1)  # set loops to -1 to loop indefinitely, start at 0.0
 
 
@@ -520,7 +520,7 @@ if __name__ == "__main__":
     # https://docs.pyvista.org/api/plotting/_autosummary/pyvista.Plotter.enable_depth_peeling.html
     # ??? - test
 
-    p.enable_surface_picking(callback=explode, left_clicking=True, font_size=12, show_message="Controls:\n - Click to explode \n - R to reset\n - Z to load Next model\n - X to load Prev model\n - Q to quit Simulator")
+    p.enable_surface_picking(callback=explode, left_clicking=True, font_size=12, show_message="Controls:\n - Click to explode \n - R to reset\n - X to load Next model\n - Z to load Prev model\n - Q to quit Simulator")
 
     params = {
         "explodiness": 0.5,
