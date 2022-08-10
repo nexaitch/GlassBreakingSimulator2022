@@ -101,7 +101,7 @@ def make_physics_function(
     # inverse square law
     velocities = [(explodiness * r * np.power(np.dot(r, r), -3 / 2)
                   + np.random.randn(3) * randomness) / section.volume
-                  + forward_impact * np.power(np.dot(r_perpendicular, r_perpendicular), -1 / 2) * 1
+                  + forward_impact * np.power(np.dot(r_perpendicular, r_perpendicular), -1 / 2)
                   for r, r_perpendicular, section in zip(rs, r_perpendicular_components, section_meshes)]
     # kinda hackish way to give everything a random rotation but oh well
     angular_axes = [np.random.random(3) - 0.5 for _ in section_meshes]
