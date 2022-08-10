@@ -323,8 +323,8 @@ def update_property(param_name: str, params_dict: Dict[str, Any], preprocessing=
     return do_the_thing
 
 
-glass_texture = dict(color='white', pbr=True, metallic=0.8, roughness=0.1, diffuse=1, opacity=0.1,
-                     smooth_shading=True, use_transparency=True)
+glass_texture = dict(color='white', pbr=True, metallic=1, roughness=0.1, diffuse=1, opacity=0.15,
+                     smooth_shading=True, use_transparency=False)
 
 # Buggy function to close window
 def closepv():
