@@ -1,9 +1,7 @@
 import os
 import sys
-# from voronoi import *
-import pyvista as pv # PyVista Module
-import textrect as tr # TextRect Module
-import pygame as pg # PyGame Module
+import textrect as tr  # TextRect Module
+import pygame as pg  # PyGame Module
 
 import time
 from collections import defaultdict
@@ -14,7 +12,6 @@ import pyvista as pv
 from pygame import mixer
 from pyvista import _vtk
 
-import random
 
 def clip_multiple_planes(mesh, planes, tolerance=1e-6, inplace=False):
     """Very hackish way to clip with multiple planes inplace"""
@@ -91,6 +88,7 @@ def make_physics_function(
         dt: float or Callable[[int], float] = 0.001,
         randomness: float = 0,
 ) -> Callable:
+    """Create function that simulates physics, also initialise all parameters"""
     rs = [section.center_of_mass() - origin for section in section_meshes]
 
     fl = np.linalg.norm(forward_impact)
@@ -108,7 +106,7 @@ def make_physics_function(
     angular_velocities = [spin_amount / section.volume for section in section_meshes]
     t = 0
 
-    def do_the_thing():
+    def simulate():
         nonlocal t
         if isinstance(dt, float):
             delta_time = dt
@@ -128,7 +126,7 @@ def make_physics_function(
 
         p.update()
 
-    return do_the_thing
+    return simulate
 
 
 def setup_scene():
@@ -144,20 +142,23 @@ def setup_scene():
     p = pv.Plotter()
     p.add_points(test_point_cloud)
 
-    # Create a cubemap from 6 images, arguments are the Directory folder, followed by the prefix for the images, followed by the image extension
+    # Create a cubemap from 6 images, arguments are the Directory folder,
+    # followed by the prefix for the images, followed by the image extension
     cubemap = pv.cubemap('cubemap_test', 'spacehigh', '.jpg')
     p.add_actor(cubemap.to_skybox())  # convert cubemap to skybox
     p.set_environment_texture(cubemap)
 
 # Function to load the next model from Global List of Models
 def switch_object_right():
-    global model_index , list_of_models, test_mesh, text_actor # obtain global variable for model index and list of all models, and text actor
+    # obtain global variable for model index and list of all models, and text actor
+    global model_index , list_of_models, test_mesh, text_actor
     model_index = (model_index + 1) % 11 # 11 models in total
     filename = list_of_models[model_index]
     reader = pv.get_reader(filename)
     test_mesh = reader.read()
     p.remove_actor(text_actor)
-    text_actor = p.add_text(list_of_names[model_index], position='lower_left', color='#E0EEEE', shadow=True, font_size=26) # update display Text based on the model index and add it as an actor
+    text_actor = p.add_text(list_of_names[model_index], position='lower_left', color='#E0EEEE', shadow=True, font_size=26)
+    # update display Text based on the model index and add it as an actor
     reset()
 
 # Function to load the previous model from Global List of Models
@@ -182,6 +183,7 @@ def reset():
     p.update()
 
 
+# Function to generate points for voronoi fracturing
 def generate_points(size: int, origin: np.ndarray = None, spread: float = 1, df: int = 3):
     # https://mathworld.wolfram.com/SpherePointPicking.html
 
@@ -204,6 +206,7 @@ def generate_points(size: int, origin: np.ndarray = None, spread: float = 1, df:
     return np.vstack((xs, ys, zs)).transpose() + origins
 
 
+# function for easing between two values using sigmoid
 def smooth_ramp(initial, final, timescale=100, midpoint=100):
     def do_the_thing(t):
         t -= midpoint
@@ -282,13 +285,15 @@ def update_property(param_name: str, params_dict: Dict[str, Any], preprocessing=
 glass_texture = dict(color='white', pbr=True, metallic=1, roughness=0.1, diffuse=1, specular=1, opacity=0.15,
                      smooth_shading=True, use_transparency=False)
 
+
 # Function to close window
 def closepv():
     print("Exiting Glass Breaking Simulator")
     p.close()
     sys.exit() # to quit safely
 
-class Button():
+
+class Button:
     def __init__(self, img, bounds, txt_in, font, base_col, hover_col, break_style):
         self.img = img
         self.break_style = break_style
@@ -323,6 +328,7 @@ class Button():
         else:
             self.render_text = self.font.render(self.txt_in, True, self.base_col)
             self.img = self.render_text
+
 
 def main_menu():
     pg.display.set_caption("Glass Breaking Simulator")
@@ -392,6 +398,7 @@ def help():
                     main_menu()
 
         pg.display.update()
+
 
 if __name__ == "__main__":
     pg.init()
