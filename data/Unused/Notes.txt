@@ -1,0 +1,7 @@
+Do not use these models
+=======================
+Altar.stl => attempt to make a 3D scene, split voronoi does not work since it is non manifold and contains a multitude of separate objects
+Bottle.stl => non-manifold
+Jewel.stl => first attempt at jewel 3D model
+Potion.stl => low poly potion model
+Wine.stl and WineVer2.stl => extremely laggy due to intense application of subdivision surfaces for extra smoothness
