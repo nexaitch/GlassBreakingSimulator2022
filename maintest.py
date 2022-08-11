@@ -1,9 +1,9 @@
 import os
 import sys
 # from voronoi import *
-import pyvista as pv
-import textrect as tr
-import pygame as pg
+import pyvista as pv # PyVista Module
+import textrect as tr # TextRect Module
+import pygame as pg # PyGame Module
 
 import time
 from collections import defaultdict
@@ -13,8 +13,6 @@ import numpy as np
 import pyvista as pv
 from pygame import mixer
 from pyvista import _vtk
-
-# NOW KINDA WORKS
 
 def clip_multiple_planes(mesh, planes, tolerance=1e-6, inplace=False):
     """Very hackish way to clip with multiple planes inplace"""
@@ -323,7 +321,7 @@ def update_property(param_name: str, params_dict: Dict[str, Any], preprocessing=
     return do_the_thing
 
 
-glass_texture = dict(color='white', pbr=True, metallic=1, roughness=0.1, diffuse=1, opacity=0.15,
+glass_texture = dict(color='white', pbr=True, metallic=1, roughness=0.1, diffuse=1, specular=1, opacity=0.15,
                      smooth_shading=True, use_transparency=False)
 
 # Buggy function to close window
